@@ -51,12 +51,37 @@ async def cmd_start(message: Message) -> None:
             await message.answer(T.oauth_prompt.format(url=oauth_url), parse_mode="HTML")
             logger.info("oauth_flow_initiated", user_id=uid)
 
+        elif user.gcal_refresh_token is None:
+            state = generate_oauth_state(uid)
+            oauth_url = build_oauth_url(state)
+            await message.answer(T.oauth_reconnect_prompt.format(url=oauth_url), parse_mode="HTML")
+            logger.info("oauth_reconnect_initiated", user_id=uid)
+
         elif user.status == "pending_timezone":
             await message.answer(T.timezone_pending)
 
         else:
-            # active — повторный /start показывает приветствие
             await message.answer(f"Рад снова тебя видеть!\n\n{T.help_text}")
+
+
+@commands_router.message(Command("reconnect"))
+async def cmd_reconnect(message: Message) -> None:
+    uid = _user_id(message)
+    logger.info("oauth_reconnect_requested", user_id=uid)
+
+    async with get_session() as session:
+        result = await session.execute(select(User).where(User.user_id == uid))
+        user = result.scalar_one_or_none()
+
+        if user is None:
+            user = User(user_id=uid, status="pending_oauth")
+            session.add(user)
+            await session.commit()
+
+    state = generate_oauth_state(uid)
+    oauth_url = build_oauth_url(state)
+    await message.answer(T.oauth_reconnect_prompt.format(url=oauth_url), parse_mode="HTML")
+    logger.info("oauth_reconnect_initiated", user_id=uid)
 
 
 # ---------------------------------------------------------------------------

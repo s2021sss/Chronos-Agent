@@ -200,17 +200,21 @@ async def google_oauth_callback(
     encrypted_token = encrypt_refresh_token(tokens.refresh_token)
 
     async with get_session() as session:
+        user = await session.scalar(select(User).where(User.user_id == user_id))
+        next_status = (
+            "active" if user is not None and user.status == "active" else "pending_timezone"
+        )
         await session.execute(
             update(User)
             .where(User.user_id == user_id)
             .values(
                 gcal_refresh_token=encrypted_token,
-                status="pending_timezone",
+                status=next_status,
             )
         )
         await session.commit()
 
-    logger.info("google_oauth_completed", user_id=user_id)
+    logger.info("google_oauth_completed", user_id=user_id, status=next_status)
 
     if settings.google_webhook_base_url:
         try:
@@ -236,7 +240,14 @@ async def google_oauth_callback(
         from chronos_agent.bot.texts import T
 
         bot = get_bot()
-        await bot.send_message(int(user_id), T.oauth_done_set_timezone)
+        if next_status == "active":
+            await bot.send_message(
+                int(user_id),
+                "Google Calendar переподключён. "
+                "Теперь повтори запрос, который не удалось выполнить.",
+            )
+        else:
+            await bot.send_message(int(user_id), T.oauth_done_set_timezone)
     except Exception as exc:
         logger.warning("telegram_notify_failed", user_id=user_id, error=str(exc))
 

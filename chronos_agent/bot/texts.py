@@ -11,6 +11,11 @@ class _Texts:
     oauth_prompt: str = (
         '<a href="{url}">Подключить Google Calendar</a>\n\nНажми на ссылку и разреши доступ.'
     )
+    oauth_reconnect_prompt: str = (
+        "Если Google Calendar перестал подключаться, то перейдите по ссылке ниже:\n\n"
+        '<a href="{url}">Переподключить Google Calendar</a>\n\n'
+        "После авторизации повтори запрос."
+    )
     oauth_pending: str = "Ожидаю подключения Google-аккаунта.\nПожалуйста, перейди по ссылке выше."
     oauth_done_set_timezone: str = (
         "Google Calendar подключён!\n\n"
@@ -37,6 +42,7 @@ class _Texts:
         "/cancel — отменить текущее действие\n"
         "/help — эта справка\n"
         "/status — список активных задач\n"
+        "/reconnect — переподключить Google Calendar\n"
         "/timezone &lt;tz&gt; — установить часовой пояс\n\n"
         "<b>Примеры запросов:</b>\n"
         "  «Встреча с Иваном в пятницу в 10:00»\n"

@@ -83,6 +83,7 @@ async def register_bot_commands() -> None:
         BotCommand(command="start", description="Начать настройку или показать приветствие"),
         BotCommand(command="help", description="Показать справку и примеры запросов"),
         BotCommand(command="status", description="Показать активные задачи"),
+        BotCommand(command="reconnect", description="Переподключить Google Calendar"),
         BotCommand(command="timezone", description="Установить часовой пояс"),
         BotCommand(command="cancel", description="Отменить текущее действие"),
     ]

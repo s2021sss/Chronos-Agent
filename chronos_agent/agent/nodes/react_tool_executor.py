@@ -19,8 +19,9 @@ from sqlalchemy import select
 
 from chronos_agent.agent.react_state import ReactAgentState
 from chronos_agent.db.engine import get_session
-from chronos_agent.db.models import CalendarEvent, CalendarTask
+from chronos_agent.db.models import CalendarEvent, CalendarTask, User
 from chronos_agent.formatting import fmt_local
+from chronos_agent.google.auth import build_oauth_url, generate_oauth_state
 from chronos_agent.logging import get_logger
 from chronos_agent.memory.conversation import get_conversation_history
 from chronos_agent.observability import get_current_trace_id, node_span
@@ -92,6 +93,10 @@ async def read_tool_executor_node(state: ReactAgentState) -> dict:
 
     try:
         result = await _execute_read_tool(name, args, user_id, state)
+    except OAuthExpiredError:
+        logger.warning("read_tool_oauth_expired", user_id=user_id, tool=name)
+        msg = await _prepare_oauth_reconnect(user_id)
+        result = {"error": msg}
     except Exception as exc:
         logger.warning(
             "read_tool_executor_error",
@@ -125,7 +130,23 @@ async def read_tool_executor_node(state: ReactAgentState) -> dict:
         "messages": list(state.get("messages") or []) + [tool_message],
         "pending_tool_call": None,
         "tool_call_id": None,
+        "final_answer": locals().get("final_answer"),
     }
+
+
+async def _prepare_oauth_reconnect(user_id: str) -> str:
+    async with get_session() as session:
+        user = await session.scalar(select(User).where(User.user_id == user_id))
+        if user is not None:
+            user.gcal_refresh_token = None
+            await session.commit()
+
+    oauth_url = build_oauth_url(generate_oauth_state(user_id))
+    return (
+        "Нет доступа к Google Calendar.\n\n"
+        f"Переподключи аккаунт по ссылке:\n{oauth_url}\n\n"
+        "После авторизации повтори запрос."
+    )
 
 
 async def _execute_read_tool(name: str, args: dict, user_id: str, state: ReactAgentState) -> dict:
@@ -241,7 +262,7 @@ async def write_tool_executor_node(state: ReactAgentState) -> dict:
         error_msg = str(exc)
     except OAuthExpiredError:
         logger.warning("write_tool_oauth_expired", user_id=user_id)
-        msg = "Нет доступа к Google Calendar. Переподключи аккаунт командой /start."
+        msg = await _prepare_oauth_reconnect(user_id)
         result = {"success": False, "error": msg}
         error_msg = msg
     except CalendarAPIError as exc:
