@@ -53,7 +53,8 @@ def call_with_retry[T](
             status = exc.status_code
 
             if status == 401:
-                raise OAuthExpiredError(f"Google OAuth token expired (401) during {operation}") from exc
+                msg = f"Google OAuth token expired (401) during {operation}"
+                raise OAuthExpiredError(msg) from exc
 
             api_exc = CalendarAPIError(status, str(exc))
 
