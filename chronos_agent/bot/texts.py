@@ -22,8 +22,7 @@ class _Texts:
         "Теперь укажи свой часовой пояс. Примеры:\n"
         "  /timezone Europe/Moscow\n"
         "  /timezone Asia/Almaty\n"
-        "  /timezone UTC\n\n"
-        "Или просто напиши название города — я постараюсь определить."
+        "  /timezone UTC"
     )
     timezone_pending: str = (
         "Осталось указать часовой пояс.\nИспользуй команду: /timezone Europe/Moscow"
