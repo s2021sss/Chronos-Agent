@@ -1,0 +1,353 @@
+{
+  "date": "2026-04-13",
+  "whisper_model": "base",
+  "mistral_model": "mistral-large-latest",
+  "mode": "e2e",
+  "total_cases": 11,
+  "asr_passed": 11,
+  "asr_accuracy": 1.0,
+  "e2e_passed": 11,
+  "e2e_accuracy": 1.0,
+  "asr_latency_p50_ms": 917,
+  "asr_latency_p95_ms": 1163,
+  "nlu_latency_p50_ms": 2578,
+  "nlu_latency_p95_ms": 3834,
+  "results": [
+    {
+      "case_id": "VA-001",
+      "category": "create_event",
+      "difficulty": "easy",
+      "file": "voice_va001.ogg",
+      "say_exactly": "Запланируй встречу с командой завтра в десять утра на час",
+      "transcript": "Запланирую встречу с командой завтра в 10 утра на час.",
+      "asr_passed": true,
+      "asr_latency_ms": 1002.7668331749737,
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "10",
+          "expected": "10",
+          "note": ""
+        },
+        {
+          "name": "duration_minutes",
+          "passed": true,
+          "actual": "60",
+          "expected": "60 ±15",
+          "note": ""
+        }
+      ],
+      "nlu_latency_ms": 3233.1575830467045,
+      "nlu_iterations": 2,
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "VA-002",
+      "category": "create_event",
+      "difficulty": "medium",
+      "file": "voice_va002.ogg",
+      "say_exactly": "Добавь встречу с клиентом послезавтра в два часа дня на два часа",
+      "transcript": "Добавь встречи с клиентом после завтра в два часа дня на два часа.",
+      "asr_passed": true,
+      "asr_latency_ms": 891.7901669628918,
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "14",
+          "expected": "14",
+          "note": ""
+        },
+        {
+          "name": "duration_minutes",
+          "passed": true,
+          "actual": "120",
+          "expected": "120 ±15",
+          "note": ""
+        }
+      ],
+      "nlu_latency_ms": 2844.459917396307,
+      "nlu_iterations": 2,
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "VA-003",
+      "category": "create_event",
+      "difficulty": "medium",
+      "file": "voice_va003.ogg",
+      "say_exactly": "Запланируй тренировку в субботу утром в восемь",
+      "transcript": "Загланирую тренировку в субботу утром в 8.",
+      "asr_passed": true,
+      "asr_latency_ms": 1162.8764998167753,
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "start_weekday",
+          "passed": true,
+          "actual": "Sat",
+          "expected": "Sat",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "8",
+          "expected": "8",
+          "note": ""
+        }
+      ],
+      "nlu_latency_ms": 3073.0119170621037,
+      "nlu_iterations": 2,
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "VA-004",
+      "category": "create_event",
+      "difficulty": "hard",
+      "file": "voice_va004.ogg",
+      "say_exactly": "Встреча с командой из компании А-Би-Си Технолоджис в понедельник в одиннадцать утра",
+      "transcript": "встреча с командой и с компанией ABC-техноджеса в понедельник в 11 утра.",
+      "asr_passed": true,
+      "asr_latency_ms": 986.5707503631711,
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "start_weekday",
+          "passed": true,
+          "actual": "Mon",
+          "expected": "Mon",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "11",
+          "expected": "11",
+          "note": ""
+        }
+      ],
+      "nlu_latency_ms": 2583.135707769543,
+      "nlu_iterations": 2,
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "VA-005",
+      "category": "create_event",
+      "difficulty": "easy",
+      "file": "voice_va005.ogg",
+      "say_exactly": "Поставь звонок с Иваном в среду в четыре часа дня",
+      "transcript": "поставим звонок с ИВаном в среду в 4 часа дня.",
+      "asr_passed": true,
+      "asr_latency_ms": 865.9872091375291,
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "start_weekday",
+          "passed": true,
+          "actual": "Wed",
+          "expected": "Wed",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "16",
+          "expected": "16",
+          "note": ""
+        }
+      ],
+      "nlu_latency_ms": 3834.377625025809,
+      "nlu_iterations": 2,
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "VB-001",
+      "category": "create_task",
+      "difficulty": "easy",
+      "file": "voice_vb001.ogg",
+      "say_exactly": "Создай задачу: отправить квартальный отчёт до пятницы",
+      "transcript": "Создай задачу отправить квартальный отчет до пятницы.",
+      "asr_passed": true,
+      "asr_latency_ms": 917.4321251921356,
+      "expected_action": "create_task",
+      "actual_action": "create_task",
+      "actual_tool": "create_task",
+      "action_passed": true,
+      "field_checks": [],
+      "nlu_latency_ms": 1277.8732078149915,
+      "nlu_iterations": 1,
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "VB-002",
+      "category": "create_task",
+      "difficulty": "medium",
+      "file": "voice_vb002.ogg",
+      "say_exactly": "Напомни позвонить врачу завтра днём",
+      "transcript": "Напомню, позвоните врачу завтра днем.",
+      "asr_passed": true,
+      "asr_latency_ms": 644.9262909591198,
+      "expected_action": "create_task",
+      "actual_action": "create_task",
+      "actual_tool": "create_task",
+      "action_passed": true,
+      "field_checks": [],
+      "nlu_latency_ms": 1047.000624705106,
+      "nlu_iterations": 1,
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "VB-003",
+      "category": "create_task",
+      "difficulty": "medium",
+      "file": "voice_vb003.ogg",
+      "say_exactly": "Мне нужно написать документацию по API до конца недели",
+      "transcript": "Мне нужно написать документацию по опи до конца неделями.",
+      "asr_passed": true,
+      "asr_latency_ms": 877.7382089756429,
+      "expected_action": "create_task",
+      "actual_action": "create_task",
+      "actual_tool": "create_task",
+      "action_passed": true,
+      "field_checks": [],
+      "nlu_latency_ms": 1016.0221252590418,
+      "nlu_iterations": 1,
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "VC-001",
+      "category": "modify_existing",
+      "difficulty": "medium",
+      "file": "voice_vc001.ogg",
+      "say_exactly": "Перенеси стендап на завтра в девять утра",
+      "transcript": "Перенеси стендап на завтра в 9 утра.",
+      "asr_passed": true,
+      "asr_latency_ms": 1057.2307496331632,
+      "expected_action": "move_event",
+      "actual_action": "move_event",
+      "actual_tool": "move_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Стендап",
+          "expected": "contains 'стендап'",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "9",
+          "expected": "9",
+          "note": ""
+        }
+      ],
+      "nlu_latency_ms": 2566.15566695109,
+      "nlu_iterations": 2,
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "VC-002",
+      "category": "modify_existing",
+      "difficulty": "easy",
+      "file": "voice_vc002.ogg",
+      "say_exactly": "Отметь задачу купить продукты как выполненную",
+      "transcript": "Отметь задачу купить продукты, как выполненую.",
+      "asr_passed": true,
+      "asr_latency_ms": 997.0111669972539,
+      "expected_action": "complete_task",
+      "actual_action": "complete_task",
+      "actual_tool": "complete_task",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Продукт",
+          "expected": "contains 'продукт'",
+          "note": ""
+        }
+      ],
+      "nlu_latency_ms": 4488.253791816533,
+      "nlu_iterations": 2,
+      "passed": true,
+      "error": null
+    },
+    {
+      "case_id": "VD-001",
+      "category": "edge_cases",
+      "difficulty": "hard",
+      "file": "voice_vd001.ogg",
+      "say_exactly": "Запланируй очень важную встречу с ключевым клиентом на следующей неделе в понедельник в десять утра примерно на час",
+      "transcript": "Запланирую очень важную встречу, исключевым клиентом на следующей неделе в понедельник в 10 утра примерно на час.",
+      "asr_passed": true,
+      "asr_latency_ms": 1189.1773748211563,
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "start_weekday",
+          "passed": true,
+          "actual": "Mon",
+          "expected": "Mon",
+          "note": ""
+        },
+        {
+          "name": "start_hour_min",
+          "passed": true,
+          "actual": "10",
+          "expected": ">= 10",
+          "note": ""
+        },
+        {
+          "name": "start_hour_max",
+          "passed": true,
+          "actual": "10",
+          "expected": "<= 11",
+          "note": ""
+        },
+        {
+          "name": "duration_minutes",
+          "passed": true,
+          "actual": "60",
+          "expected": "60 ±15",
+          "note": ""
+        }
+      ],
+      "nlu_latency_ms": 2577.920417301357,
+      "nlu_iterations": 2,
+      "passed": true,
+      "error": null
+    }
+  ]
+}

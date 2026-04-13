@@ -1,0 +1,334 @@
+# NLU Eval Dataset — Chronos Agent Phase 12
+#
+# 30 эталонных кейсов для тестирования extract_intent.
+# Категории: happy_path | relative_dates | task_vs_event | modify_existing | out_of_scope | edge_cases
+#
+# Поля expected (все опциональные кроме action):
+#   action           — ожидаемый action (обязательно)
+#   action_accepts   — список допустимых альтернативных action (если несколько вариантов корректны)
+#   title_contains   — подстрока которая должна быть в title или target_*_title (регистронезависимо)
+#   target_title_contains — подстрока в target_event_title или target_task_title
+#   start_date       — относительная дата: today | tomorrow | day_after_tomorrow | next_monday .. next_sunday
+#   start_weekday    — день недели: monday | tuesday | ... | sunday
+#   start_hour       — точный час (int)
+#   start_hour_min   — час >= N
+#   start_hour_max   — час <= N
+#   duration_minutes — ожидаемая длительность ±15 мин
+#   has_clarification — clarification_needed не None (bool)
+
+# ===========================================================================
+# Категория 1 — happy_path (8 кейсов)
+# Чёткие запросы с явными временными метками, без неоднозначности
+# ===========================================================================
+
+- id: HP-001
+  category: happy_path
+  description: "Встреча с точным временем и длительностью"
+  input: "Запланируй встречу с командой завтра в 10 утра на час"
+  expected:
+    action: create_event
+    title_contains: "встреч"
+    start_date: tomorrow
+    start_hour: 10
+    duration_minutes: 60
+
+- id: HP-002
+  category: happy_path
+  description: "Звонок с конкретным временем"
+  input: "Поставь звонок с Иваном в среду в 15:00"
+  expected:
+    action: create_event
+    title_contains: "звонок"
+    start_weekday: wednesday
+    start_hour: 15
+
+- id: HP-003
+  category: happy_path
+  description: "Создание задачи с дедлайном"
+  input: "Создай задачу: отправить квартальный отчёт до пятницы"
+  expected:
+    action: create_task
+    title_contains: "отчёт"
+
+- id: HP-004
+  category: happy_path
+  description: "Событие послезавтра с длительностью 2 часа"
+  input: "Добавь встречу с клиентом послезавтра в 14:00 на 2 часа"
+  expected:
+    action: create_event
+    title_contains: "встреч"
+    start_date: day_after_tomorrow
+    start_hour: 14
+    duration_minutes: 120
+
+- id: HP-005
+  category: happy_path
+  description: "Тренировка утром завтра"
+  input: "Запланируй тренировку на завтра в 7 утра"
+  expected:
+    action: create_event
+    title_contains: "тренировк"
+    start_date: tomorrow
+    start_hour: 7
+
+- id: HP-006
+  category: happy_path
+  description: "Покупка продуктов сегодня"
+  input: "Сегодня надо будет купить продукты"
+  expected:
+    action: create_task
+    title_contains: "продукт"
+    # Примечание: start_date/start_hour неприменимы к create_task.
+    # Задача без срока создаётся без due_date (правило системного промпта).
+
+- id: HP-007
+  category: happy_path
+  description: "Отметить задачу выполненной — явное название"
+  input: "Отметь задачу «купить продукты» как выполненную"
+  expected:
+    action: complete_task
+    title_contains: "продукт"
+
+- id: HP-008
+  category: happy_path
+  description: "Создать событие"
+  input: "Поставь стендап на сегодня в 10 часов вечера на час"
+  expected:
+    action: create_event
+    title_contains: "стендап"
+
+- id: HP-009
+  category: happy_path
+  description: "Перенос стендапа на завтра"
+  input: "Перенеси стендап на завтра в 9 утра"
+  expected:
+    action: move_event
+    title_contains: "стендап"
+    start_date: tomorrow
+    start_hour: 9
+
+- id: HP-010
+  category: happy_path
+  description: "Задача с дедлайном послезавтра"
+  input: "Создай задачу: подготовить презентацию для совета директоров, срок — послезавтра"
+  expected:
+    action: create_task
+    title_contains: "презентаци"
+
+# ===========================================================================
+# Категория 2 — relative_dates (6 кейсов)
+# Относительные даты: "вечером в пятницу", "через 2 часа", "утром в понедельник"
+# ===========================================================================
+
+- id: RD-001
+  category: relative_dates
+  description: "Встреча вечером в пятницу"
+  input: "Встреча с партнёрами в пятницу вечером"
+  expected:
+    action: create_event
+    start_weekday: friday
+    start_hour_min: 17
+    start_hour_max: 22
+
+- id: RD-002
+  category: relative_dates
+  description: "Созвон утром в понедельник"
+  input: "Созвон с командой в понедельник с утра"
+  expected:
+    action: create_event
+    start_weekday: monday
+    start_hour_max: 12
+
+- id: RD-003
+  category: relative_dates
+  description: "Встреча через 2 часа"
+  input: "Добавь встречу с юристом через 2 часа"
+  expected:
+    action: create_event
+    title_contains: "юрист"
+
+- id: RD-004
+  category: relative_dates
+  description: "Напоминание завтра днём — допустимо create_task или create_event"
+  input: "Напомни позвонить врачу завтра днём"
+  expected:
+    action: create_task
+    action_accepts: [create_event]
+    start_date: tomorrow
+    # start_hour_min/max неприменимы к create_task: due_date всегда 23:59.
+    # Для create_event часовой диапазон 12-17 («днём») применим.
+
+- id: RD-005
+  category: relative_dates
+  description: "Собрание в следующий понедельник в 10"
+  input: "Собрание с отделом маркетинга в следующий понедельник в 10 утра"
+  expected:
+    action: create_event
+    title_contains: "маркетинг"
+    start_weekday: monday
+    start_hour: 10
+
+- id: RD-006
+  category: relative_dates
+  description: "Задача через 3 дня"
+  input: "Задача: сдать проект через 3 дня"
+  expected:
+    action: create_task
+    title_contains: "проект"
+
+# ===========================================================================
+# Категория 3 — task_vs_event (4 кейса)
+# Разграничение задач (без фиксированного времени) и событий (есть начало)
+# ===========================================================================
+
+- id: TE-001
+  category: task_vs_event
+  description: "Написать документацию до конца недели — задача, нет фиксированного времени"
+  input: "Мне нужно написать документацию по API до конца недели"
+  expected:
+    action: create_task
+    title_contains: "документаци"
+
+- id: TE-002
+  category: task_vs_event
+  description: "Созвон в конкретное время — событие"
+  input: "Созвон с командой в 16:00 завтра"
+  expected:
+    action: create_event
+    start_date: tomorrow
+    start_hour: 16
+
+- id: TE-003
+  category: task_vs_event
+  description: "Напомни отправить письмо — задача без времени"
+  input: "Напомни отправить письмо Анне с предложением о партнёрстве"
+  expected:
+    action: create_task
+    title_contains: "письм"
+
+- id: TE-004
+  category: task_vs_event
+  description: "Собеседование с явным временем — событие"
+  input: "Собеседование завтра в 11:00 на полтора часа"
+  expected:
+    action: create_event
+    start_date: tomorrow
+    start_hour: 11
+    duration_minutes: 90
+
+# ===========================================================================
+# Категория 4 — modify_existing (4 кейса)
+# move_event и complete_task — ссылки на существующие записи
+# ===========================================================================
+
+- id: ME-001
+  category: modify_existing
+  description: "Перенос встречи на четверг"
+  input: "Перенеси встречу с клиентом на четверг в 15:00"
+  expected:
+    action: move_event
+    target_title_contains: "клиент"
+    start_weekday: thursday
+    start_hour: 15
+
+- id: ME-002
+  category: modify_existing
+  description: "Выполнить задачу по явному названию"
+  input: "Отметь задачу «сдать отчёт» как выполненную"
+  expected:
+    action: complete_task
+    target_title_contains: "отчёт"
+
+- id: ME-003
+  category: modify_existing
+  description: "Перенос стендапа на следующую среду"
+  input: "Перенеси утренний стендап на следующую среду в 10 утра"
+  expected:
+    action: move_event
+    title_contains: "стендап"
+    start_weekday: wednesday
+    start_hour: 10
+
+- id: ME-004
+  category: modify_existing
+  description: "Пометить задачу выполненной — разговорная форма"
+  input: "Пометь «подготовить слайды» как сделано"
+  expected:
+    action: complete_task
+    title_contains: "слайд"
+
+# ===========================================================================
+# Категория 5 — out_of_scope (4 кейса)
+# Запросы вне тематики планирования → action = unknown + низкая уверенность
+# ===========================================================================
+
+- id: OOS-001
+  category: out_of_scope
+  description: "Программирование — вне тематики"
+  input: "Как написать сортировку пузырьком на Python?"
+  expected:
+    action: unknown
+
+- id: OOS-002
+  category: out_of_scope
+  description: "Погода — вне тематики"
+  input: "Какая погода будет завтра в Москве?"
+  expected:
+    action: unknown
+
+- id: OOS-003
+  category: out_of_scope
+  description: "Развлечения — вне тематики"
+  input: "Расскажи мне смешной анекдот"
+  expected:
+    action: unknown
+
+- id: OOS-004
+  category: out_of_scope
+  description: "HR-задачи — вне тематики"
+  input: "Помоги написать резюме для вакансии разработчика"
+  expected:
+    action: unknown
+
+# ===========================================================================
+# Категория 6 — edge_cases (4 кейса)
+# Граничные случаи: невалидные данные, неоднозначность, слишком короткий ввод
+# ===========================================================================
+
+- id: EC-001
+  category: edge_cases
+  description: "Невалидное время 25:00 → низкая уверенность или unknown"
+  input: "Поставь встречу в 25:00"
+  expected:
+    action: create_event
+    action_accepts: [unknown]  # оба варианта корректны: невалидное время → refuse или low-conf
+
+- id: EC-002
+  category: edge_cases
+  description: "Приветствие без задачи → unknown"
+  input: "Привет! Как дела?"
+  expected:
+    action: unknown
+
+- id: EC-003
+  category: edge_cases
+  description: "Запрос без деталей → создаёт событие или уточняет (оба варианта корректны)"
+  input: "Создай встречу"
+  expected:
+    action: create_event
+    action_accepts: [unknown]
+
+- id: EC-004
+  category: edge_cases
+  description: "Длинный запрос с несколькими деталями → корректное извлечение"
+  input: >
+    Мне нужно запланировать очень важную встречу с ключевым клиентом из компании
+    ABC Technologies на следующей неделе, желательно в первой половине дня примерно
+    в 10-11 утра в понедельник, продолжительностью около часа
+  expected:
+    action: create_event
+    title_contains: "ABC"
+    start_weekday: monday
+    start_hour_min: 10
+    start_hour_max: 11
+    duration_minutes: 60

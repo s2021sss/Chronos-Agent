@@ -1,0 +1,891 @@
+{
+  "date": "2026-04-13",
+  "timezone": "Europe/Moscow",
+  "model": "mistral-large-latest",
+  "total_cases": 32,
+  "passed": 32,
+  "nlu_success_rate": 1.0,
+  "action_accuracy": 1.0,
+  "latency_p50_ms": 1428,
+  "latency_p95_ms": 2851,
+  "latency_p99_ms": 3037,
+  "errors": 0,
+  "results": [
+    {
+      "case_id": "HP-001",
+      "category": "happy_path",
+      "input_text": "Запланируй встречу с командой завтра в 10 утра на час",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Встреча с командой",
+          "expected": "contains 'встреч'",
+          "note": ""
+        },
+        {
+          "name": "start_date",
+          "passed": true,
+          "actual": "2026-04-15",
+          "expected": "2026-04-15",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "10",
+          "expected": "10",
+          "note": ""
+        },
+        {
+          "name": "duration_minutes",
+          "passed": true,
+          "actual": "60",
+          "expected": "60 ±15",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2720.682749990374,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "HP-002",
+      "category": "happy_path",
+      "input_text": "Поставь звонок с Иваном в среду в 15:00",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Звонок с Иваном",
+          "expected": "contains 'звонок'",
+          "note": ""
+        },
+        {
+          "name": "start_weekday",
+          "passed": true,
+          "actual": "Wed",
+          "expected": "Wed",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "15",
+          "expected": "15",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2574.6604171581566,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "HP-003",
+      "category": "happy_path",
+      "input_text": "Создай задачу: отправить квартальный отчёт до пятницы",
+      "expected_action": "create_task",
+      "actual_action": "create_task",
+      "actual_tool": "create_task",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Отправить квартальный отчёт",
+          "expected": "contains 'отчёт'",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 966.9651663862169,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "HP-004",
+      "category": "happy_path",
+      "input_text": "Добавь встречу с клиентом послезавтра в 14:00 на 2 часа",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Встреча с клиентом",
+          "expected": "contains 'встреч'",
+          "note": ""
+        },
+        {
+          "name": "start_date",
+          "passed": true,
+          "actual": "2026-04-16",
+          "expected": "2026-04-16",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "14",
+          "expected": "14",
+          "note": ""
+        },
+        {
+          "name": "duration_minutes",
+          "passed": true,
+          "actual": "120",
+          "expected": "120 ±15",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2660.3349577635527,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "HP-005",
+      "category": "happy_path",
+      "input_text": "Запланируй тренировку на завтра в 7 утра",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Тренировка",
+          "expected": "contains 'тренировк'",
+          "note": ""
+        },
+        {
+          "name": "start_date",
+          "passed": true,
+          "actual": "2026-04-15",
+          "expected": "2026-04-15",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "7",
+          "expected": "7",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2474.190792068839,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "HP-006",
+      "category": "happy_path",
+      "input_text": "Сегодня надо будет купить продукты",
+      "expected_action": "create_task",
+      "actual_action": "create_task",
+      "actual_tool": "create_task",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Купить продукты",
+          "expected": "contains 'продукт'",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 718.7947076745331,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "HP-007",
+      "category": "happy_path",
+      "input_text": "Отметь задачу «купить продукты» как выполненную",
+      "expected_action": "complete_task",
+      "actual_action": "complete_task",
+      "actual_tool": "complete_task",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "купить продукты",
+          "expected": "contains 'продукт'",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 1293.5929577797651,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "HP-008",
+      "category": "happy_path",
+      "input_text": "Поставь стендап на сегодня в 10 часов вечера на час",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Стендап",
+          "expected": "contains 'стендап'",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2643.8741656020284,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "HP-009",
+      "category": "happy_path",
+      "input_text": "Перенеси стендап на завтра в 9 утра",
+      "expected_action": "move_event",
+      "actual_action": "move_event",
+      "actual_tool": "move_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Стендап",
+          "expected": "contains 'стендап'",
+          "note": ""
+        },
+        {
+          "name": "start_date",
+          "passed": true,
+          "actual": "2026-04-15",
+          "expected": "2026-04-15",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "9",
+          "expected": "9",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2850.512709002942,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "HP-010",
+      "category": "happy_path",
+      "input_text": "Создай задачу: подготовить презентацию для совета директоров, срок — послезавтра",
+      "expected_action": "create_task",
+      "actual_action": "create_task",
+      "actual_tool": "create_task",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Подготовить презентацию для совета директоров",
+          "expected": "contains 'презентаци'",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 1264.2364581115544,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "RD-001",
+      "category": "relative_dates",
+      "input_text": "Встреча с партнёрами в пятницу вечером",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "start_weekday",
+          "passed": true,
+          "actual": "Fri",
+          "expected": "Fri",
+          "note": ""
+        },
+        {
+          "name": "start_hour_min",
+          "passed": true,
+          "actual": "19",
+          "expected": ">= 17",
+          "note": ""
+        },
+        {
+          "name": "start_hour_max",
+          "passed": true,
+          "actual": "19",
+          "expected": "<= 22",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2456.2004576437175,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "RD-002",
+      "category": "relative_dates",
+      "input_text": "Созвон с командой в понедельник с утра",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "start_weekday",
+          "passed": true,
+          "actual": "Mon",
+          "expected": "Mon",
+          "note": ""
+        },
+        {
+          "name": "start_hour_max",
+          "passed": true,
+          "actual": "9",
+          "expected": "<= 12",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2631.028207950294,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "RD-003",
+      "category": "relative_dates",
+      "input_text": "Добавь встречу с юристом через 2 часа",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Встреча с юристом",
+          "expected": "contains 'юрист'",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 3037.4717079102993,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "RD-004",
+      "category": "relative_dates",
+      "input_text": "Напомни позвонить врачу завтра днём",
+      "expected_action": "create_task",
+      "actual_action": "create_task",
+      "actual_tool": "create_task",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "start_date",
+          "passed": true,
+          "actual": "2026-04-15",
+          "expected": "2026-04-15",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 1086.5643341094255,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "RD-005",
+      "category": "relative_dates",
+      "input_text": "Собрание с отделом маркетинга в следующий понедельник в 10 утра",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Собрание с отделом маркетинга",
+          "expected": "contains 'маркетинг'",
+          "note": ""
+        },
+        {
+          "name": "start_weekday",
+          "passed": true,
+          "actual": "Mon",
+          "expected": "Mon",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "10",
+          "expected": "10",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2385.994707699865,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "RD-006",
+      "category": "relative_dates",
+      "input_text": "Задача: сдать проект через 3 дня",
+      "expected_action": "create_task",
+      "actual_action": "create_task",
+      "actual_tool": "create_task",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Сдать проект",
+          "expected": "contains 'проект'",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 1179.615625180304,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "TE-001",
+      "category": "task_vs_event",
+      "input_text": "Мне нужно написать документацию по API до конца недели",
+      "expected_action": "create_task",
+      "actual_action": "create_task",
+      "actual_tool": "create_task",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Написать документацию по API",
+          "expected": "contains 'документаци'",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 1027.1056657657027,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "TE-002",
+      "category": "task_vs_event",
+      "input_text": "Созвон с командой в 16:00 завтра",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "start_date",
+          "passed": true,
+          "actual": "2026-04-15",
+          "expected": "2026-04-15",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "16",
+          "expected": "16",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2436.9624173268676,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "TE-003",
+      "category": "task_vs_event",
+      "input_text": "Напомни отправить письмо Анне с предложением о партнёрстве",
+      "expected_action": "create_task",
+      "actual_action": "create_task",
+      "actual_tool": "create_task",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Отправить письмо Анне с предложением о партнёрстве",
+          "expected": "contains 'письм'",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 803.6816250532866,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "TE-004",
+      "category": "task_vs_event",
+      "input_text": "Собеседование завтра в 11:00 на полтора часа",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "start_date",
+          "passed": true,
+          "actual": "2026-04-15",
+          "expected": "2026-04-15",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "11",
+          "expected": "11",
+          "note": ""
+        },
+        {
+          "name": "duration_minutes",
+          "passed": true,
+          "actual": "90",
+          "expected": "90 ±15",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2654.434584081173,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "ME-001",
+      "category": "modify_existing",
+      "input_text": "Перенеси встречу с клиентом на четверг в 15:00",
+      "expected_action": "move_event",
+      "actual_action": "move_event",
+      "actual_tool": "move_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "target_title_contains",
+          "passed": true,
+          "actual": "клиент",
+          "expected": "contains 'клиент'",
+          "note": ""
+        },
+        {
+          "name": "start_weekday",
+          "passed": true,
+          "actual": "Thu",
+          "expected": "Thu",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "15",
+          "expected": "15",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2512.0310415513813,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "ME-002",
+      "category": "modify_existing",
+      "input_text": "Отметь задачу «сдать отчёт» как выполненную",
+      "expected_action": "complete_task",
+      "actual_action": "complete_task",
+      "actual_tool": "complete_task",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "target_title_contains",
+          "passed": true,
+          "actual": "сдать отчёт",
+          "expected": "contains 'отчёт'",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 1366.5246251039207,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "ME-003",
+      "category": "modify_existing",
+      "input_text": "Перенеси утренний стендап на следующую среду в 10 утра",
+      "expected_action": "move_event",
+      "actual_action": "move_event",
+      "actual_tool": "move_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Утренний стендап",
+          "expected": "contains 'стендап'",
+          "note": ""
+        },
+        {
+          "name": "start_weekday",
+          "passed": true,
+          "actual": "Wed",
+          "expected": "Wed",
+          "note": ""
+        },
+        {
+          "name": "start_hour",
+          "passed": true,
+          "actual": "10",
+          "expected": "10",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2475.329332984984,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "ME-004",
+      "category": "modify_existing",
+      "input_text": "Пометь «подготовить слайды» как сделано",
+      "expected_action": "complete_task",
+      "actual_action": "complete_task",
+      "actual_tool": "complete_task",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "подготовить слайды",
+          "expected": "contains 'слайд'",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 1317.4749999307096,
+      "iterations": 2,
+      "error": null
+    },
+    {
+      "case_id": "OOS-001",
+      "category": "out_of_scope",
+      "input_text": "Как написать сортировку пузырьком на Python?",
+      "expected_action": "unknown",
+      "actual_action": "unknown",
+      "actual_tool": "ask_user",
+      "action_passed": true,
+      "field_checks": [],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 944.6215410716832,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "OOS-002",
+      "category": "out_of_scope",
+      "input_text": "Какая погода будет завтра в Москве?",
+      "expected_action": "unknown",
+      "actual_action": "unknown",
+      "actual_tool": "unknown",
+      "action_passed": true,
+      "field_checks": [],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 1427.602166775614,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "OOS-003",
+      "category": "out_of_scope",
+      "input_text": "Расскажи мне смешной анекдот",
+      "expected_action": "unknown",
+      "actual_action": "unknown",
+      "actual_tool": "unknown",
+      "action_passed": true,
+      "field_checks": [],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 934.8755422979593,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "OOS-004",
+      "category": "out_of_scope",
+      "input_text": "Помоги написать резюме для вакансии разработчика",
+      "expected_action": "unknown",
+      "actual_action": "unknown",
+      "actual_tool": "ask_user",
+      "action_passed": true,
+      "field_checks": [],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 955.1806249655783,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "EC-001",
+      "category": "edge_cases",
+      "input_text": "Поставь встречу в 25:00",
+      "expected_action": "create_event",
+      "actual_action": "unknown",
+      "actual_tool": "ask_user",
+      "action_passed": true,
+      "field_checks": [],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 1279.3353339657187,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "EC-002",
+      "category": "edge_cases",
+      "input_text": "Привет! Как дела?",
+      "expected_action": "unknown",
+      "actual_action": "unknown",
+      "actual_tool": "unknown",
+      "action_passed": true,
+      "field_checks": [],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 1238.0025829188526,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "EC-003",
+      "category": "edge_cases",
+      "input_text": "Создай встречу",
+      "expected_action": "create_event",
+      "actual_action": "unknown",
+      "actual_tool": "unknown",
+      "action_passed": true,
+      "field_checks": [],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 1331.8205000832677,
+      "iterations": 1,
+      "error": null
+    },
+    {
+      "case_id": "EC-004",
+      "category": "edge_cases",
+      "input_text": "Мне нужно запланировать очень важную встречу с ключевым клиентом из компании ABC Technologies на следующей неделе, желательно в первой половине дня примерно в 10-11 утра в понедельник, продолжительностью около часа\n",
+      "expected_action": "create_event",
+      "actual_action": "create_event",
+      "actual_tool": "create_event",
+      "action_passed": true,
+      "field_checks": [
+        {
+          "name": "title_contains",
+          "passed": true,
+          "actual": "Встреча с ключевым клиентом из ABC Technologies",
+          "expected": "contains 'ABC'",
+          "note": ""
+        },
+        {
+          "name": "start_weekday",
+          "passed": true,
+          "actual": "Mon",
+          "expected": "Mon",
+          "note": ""
+        },
+        {
+          "name": "start_hour_min",
+          "passed": true,
+          "actual": "10",
+          "expected": ">= 10",
+          "note": ""
+        },
+        {
+          "name": "start_hour_max",
+          "passed": true,
+          "actual": "10",
+          "expected": "<= 11",
+          "note": ""
+        },
+        {
+          "name": "duration_minutes",
+          "passed": true,
+          "actual": "60",
+          "expected": "60 ±15",
+          "note": ""
+        }
+      ],
+      "all_fields_passed": true,
+      "passed": true,
+      "latency_ms": 2529.892749618739,
+      "iterations": 2,
+      "error": null
+    }
+  ]
+}

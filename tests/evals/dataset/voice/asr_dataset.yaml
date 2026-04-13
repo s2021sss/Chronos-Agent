@@ -1,0 +1,161 @@
+# ASR + Voice E2E Eval Dataset — Chronos Agent
+#
+# Проверяет два уровня:
+#   1. ASR accuracy — транскрипция Whisper совпадает с ожидаемым текстом
+#   2. NLU accuracy — extract_intent на транскрипте даёт правильный action
+#
+# Форматы аудио: .ogg (Telegram native), .wav (для удобства)
+# Whisper модель: base, language=ru, beam_size=5, vad_filter=True
+#
+# Поля:
+#   file         — имя файла в папке tests/evals/dataset/voice/
+#   description  — что проверяем
+#   expected_transcript_contains — подстрока, которая должна быть в транскрипте
+#                                  (регистронезависимо; не полное совпадение — Whisper может
+#                                   добавлять знаки препинания и незначительно менять формулировку)
+#   expected_nlu — те же поля что в nlu_dataset.yaml (action и т.д.)
+#
+
+# ===========================================================================
+# Категория 1 — create_event (5 фраз)
+# ===========================================================================
+
+- id: VA-001
+  category: create_event
+  difficulty: easy
+  description: "Встреча завтра в 10 утра — базовый кейс"
+  file: voice_va001.ogg
+  say_exactly: "Запланируй встречу с командой завтра в десять утра на час"
+  expected_transcript_contains: "встреч"
+  expected_nlu:
+    action: create_event
+    start_hour: 10
+    duration_minutes: 60
+
+- id: VA-002
+  category: create_event
+  difficulty: medium
+  description: "Событие с конкретной датой и длительностью"
+  file: voice_va002.ogg
+  say_exactly: "Добавь встречу с клиентом послезавтра в два часа дня на два часа"
+  expected_transcript_contains: "клиент"
+  expected_nlu:
+    action: create_event
+    start_hour: 14
+    duration_minutes: 120
+
+- id: VA-003
+  category: create_event
+  difficulty: medium
+  description: "Тренировка с относительным временем"
+  file: voice_va003.ogg
+  say_exactly: "Запланируй тренировку в субботу утром в восемь"
+  expected_transcript_contains: "тренировк"
+  expected_nlu:
+    action: create_event
+    start_weekday: saturday
+    start_hour: 8
+
+- id: VA-004
+  category: create_event
+  difficulty: hard
+  description: "Встреча с иностранным названием компании"
+  file: voice_va004.ogg
+  say_exactly: "Встреча с командой из компании А-Би-Си Технолоджис в понедельник в одиннадцать утра"
+  expected_transcript_contains: "понедельник"
+  expected_nlu:
+    action: create_event
+    start_weekday: monday
+    start_hour: 11
+
+- id: VA-005
+  category: create_event
+  difficulty: easy
+  description: "Звонок в конкретный день и время"
+  file: voice_va005.ogg
+  say_exactly: "Поставь звонок с Иваном в среду в четыре часа дня"
+  expected_transcript_contains: "звонок"
+  expected_nlu:
+    action: create_event
+    start_weekday: wednesday
+    start_hour: 16
+
+# ===========================================================================
+# Категория 2 — create_task (3 фразы)
+# ===========================================================================
+
+- id: VB-001
+  category: create_task
+  difficulty: easy
+  description: "Задача с явным дедлайном"
+  file: voice_vb001.ogg
+  say_exactly: "Создай задачу: отправить квартальный отчёт до пятницы"
+  expected_transcript_contains: "отчет"
+  expected_nlu:
+    action: create_task
+
+- id: VB-002
+  category: create_task
+  difficulty: medium
+  description: "Напоминание без фиксированного времени"
+  file: voice_vb002.ogg
+  say_exactly: "Напомни позвонить врачу завтра днём"
+  expected_transcript_contains: "врач"
+  expected_nlu:
+    action: create_task
+    action_accepts: [create_event]
+
+- id: VB-003
+  category: create_task
+  difficulty: medium
+  description: "Задача без явного ключевого слова"
+  file: voice_vb003.ogg
+  say_exactly: "Мне нужно написать документацию по API до конца недели"
+  expected_transcript_contains: "документаци"
+  expected_nlu:
+    action: create_task
+
+# ===========================================================================
+# Категория 3 — modify_existing (2 фразы)
+# ===========================================================================
+
+- id: VC-001
+  category: modify_existing
+  difficulty: medium
+  description: "Перенос события на другой день"
+  file: voice_vc001.ogg
+  say_exactly: "Перенеси стендап на завтра в девять утра"
+  expected_transcript_contains: "стендап"
+  expected_nlu:
+    action: move_event
+    title_contains: "стендап"
+    start_hour: 9
+
+- id: VC-002
+  category: modify_existing
+  difficulty: easy
+  description: "Отметить задачу выполненной"
+  file: voice_vc002.ogg
+  say_exactly: "Отметь задачу купить продукты как выполненную"
+  expected_transcript_contains: "продукт"
+  expected_nlu:
+    action: complete_task
+    title_contains: "продукт"
+
+# ===========================================================================
+# Категория 4 — edge_cases (1 фраза)
+# ===========================================================================
+
+- id: VD-001
+  category: edge_cases
+  difficulty: hard
+  description: "Быстрая речь — длинная фраза с деталями"
+  file: voice_vd001.ogg
+  say_exactly: "Запланируй очень важную встречу с ключевым клиентом на следующей неделе в понедельник в десять утра примерно на час"
+  expected_transcript_contains: "встреч"
+  expected_nlu:
+    action: create_event
+    start_weekday: monday
+    start_hour_min: 10
+    start_hour_max: 11
+    duration_minutes: 60
