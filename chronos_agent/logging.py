@@ -2,6 +2,7 @@ import asyncio
 import json
 import logging
 import sys
+from datetime import UTC
 from typing import Any
 
 import structlog
@@ -101,7 +102,7 @@ async def _async_write_service_log(
     extra: dict | None,
     agent_version: str | None,
 ) -> None:
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     try:
         from chronos_agent.db.engine import get_session
@@ -109,7 +110,7 @@ async def _async_write_service_log(
 
         async with get_session() as session:
             log = ServiceLog(
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 level=level,
                 event=event,
                 user_id=user_id,
