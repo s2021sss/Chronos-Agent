@@ -1,0 +1,35 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    project: "chronos-agent"
+
+scrape_configs:
+
+  # ─── LLM Proxy ──────────────────────────────────────────────────────────────
+  - job_name: llm-proxy
+    static_configs:
+      - targets: ["llm-proxy:8001"]
+    metrics_path: /metrics
+    scrape_interval: 10s
+
+  # ─── Chronos Agent (FastAPI) ─────────────────────────────────────────────────
+  - job_name: agent
+    static_configs:
+      - targets: ["agent:8000"]
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # ─── cAdvisor — container CPU / Memory / Network ────────────────────────────
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]
+    metrics_path: /metrics
+    scrape_interval: 15s
+
+  # ─── Node Exporter — host CPU / Memory / Disk ────────────────────────────────
+  - job_name: node-exporter
+    static_configs:
+      - targets: ["node-exporter:9100"]
+    metrics_path: /metrics
+    scrape_interval: 15s
