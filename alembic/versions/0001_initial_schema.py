@@ -27,7 +27,6 @@ def upgrade() -> None:
         sa.Column("timezone", sa.Text(), nullable=False, server_default="UTC"),
         sa.Column("gcal_refresh_token", sa.LargeBinary(), nullable=True),
         sa.Column("status", sa.Text(), nullable=False, server_default="pending_oauth"),
-
         sa.Column("gcal_events_channel_id", sa.Text(), nullable=True),
         sa.Column("gcal_events_resource_id", sa.Text(), nullable=True),
         sa.Column(
@@ -89,13 +88,9 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint(
-            "user_id", "gcal_event_id", name="uq_calendar_events_user_gcal"
-        ),
+        sa.UniqueConstraint("user_id", "gcal_event_id", name="uq_calendar_events_user_gcal"),
     )
-    op.create_index(
-        "ix_calendar_events_user_id", "calendar_events", ["user_id"], unique=False
-    )
+    op.create_index("ix_calendar_events_user_id", "calendar_events", ["user_id"], unique=False)
     op.create_index(
         "ix_calendar_events_user_start",
         "calendar_events",
@@ -132,13 +127,9 @@ def upgrade() -> None:
             server_default=sa.text("now()"),
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint(
-            "user_id", "gcal_task_id", name="uq_calendar_tasks_user_gcal"
-        ),
+        sa.UniqueConstraint("user_id", "gcal_task_id", name="uq_calendar_tasks_user_gcal"),
     )
-    op.create_index(
-        "ix_calendar_tasks_user_id", "calendar_tasks", ["user_id"], unique=False
-    )
+    op.create_index("ix_calendar_tasks_user_id", "calendar_tasks", ["user_id"], unique=False)
     op.create_index(
         "ix_calendar_tasks_user_status_due",
         "calendar_tasks",
@@ -161,12 +152,8 @@ def upgrade() -> None:
         sa.Column("agent_version", sa.Text(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index(
-        "ix_service_logs_timestamp", "service_logs", ["timestamp"], unique=False
-    )
-    op.create_index(
-        "ix_service_logs_user_id", "service_logs", ["user_id"], unique=False
-    )
+    op.create_index("ix_service_logs_timestamp", "service_logs", ["timestamp"], unique=False)
+    op.create_index("ix_service_logs_user_id", "service_logs", ["user_id"], unique=False)
 
 
 def downgrade() -> None:

@@ -168,7 +168,10 @@ async def reasoner_node(state: ReactAgentState) -> dict:
             except Exception:
                 pass
         return {
-            "final_answer": "Не удалось обработать запрос. Попробуй ещё раз.",
+            "final_answer": (
+                "Сейчас недоступен LLM-сервис, поэтому я не могу разобрать запрос. "
+                "Попробуй ещё раз через минуту."
+            ),
             "error": str(exc),
         }
 

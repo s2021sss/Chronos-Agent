@@ -43,9 +43,7 @@ def upgrade() -> None:
         sa.UniqueConstraint("thread_id", name="uq_conversations_thread_id"),
     )
     op.create_index("ix_conversations_user_id", "conversations", ["user_id"])
-    op.create_index(
-        "ix_conversations_user_status", "conversations", ["user_id", "status"]
-    )
+    op.create_index("ix_conversations_user_status", "conversations", ["user_id", "status"])
     op.create_index(
         "ix_conversations_user_last_msg",
         "conversations",
