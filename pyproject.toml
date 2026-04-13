@@ -1,0 +1,81 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "chronos-agent"
+version = "0.1.0"
+description = "Proactive AI scheduling assistant via Telegram + Google Calendar"
+requires-python = ">=3.12"
+
+dependencies = [
+    # Telegram bot
+    "aiogram>=3.24.0",
+
+    # LangGraph + checkpointer
+    "langgraph==0.2.55",
+    "langgraph-checkpoint-postgres==2.0.8",
+
+    # LLM
+    "openai==1.57.4",          # OpenAI-compatible client for Mistral/LiteLLM
+
+    # Google APIs
+    "google-auth==2.36.0",
+    "google-auth-oauthlib==1.2.1",
+    "google-api-python-client==2.154.0",
+
+    # FastAPI
+    "fastapi==0.115.6",
+    "uvicorn[standard]==0.32.1",
+
+    # Database
+    "sqlalchemy[asyncio]==2.0.36",
+    "asyncpg==0.30.0",
+    "psycopg2-binary==2.9.11",  # для Alembic (синхронный драйвер)
+    "psycopg[pool]>=3.1.1",     # для langgraph-checkpoint-postgres (psycopg3)
+    "alembic==1.14.0",
+
+    # Scheduler
+    "apscheduler==3.10.4",
+
+    # Whisper ASR
+    "faster-whisper==1.1.0",
+
+    # Observability
+    "langfuse==2.57.1",
+    "prometheus-client>=0.20.0",
+
+    # Config
+    "pydantic-settings==2.6.1",
+    "pydantic==2.10.3",
+
+    # Encryption
+    "cryptography==44.0.0",
+
+    # Utils
+    "python-multipart==0.0.19",   # FastAPI file uploads
+    "httpx==0.28.1",              # async HTTP (health checks)
+    "structlog==24.4.0",          # JSON structured logging
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "pytest-asyncio==0.24.0",
+    "pytest-mock==3.14.0",
+    "ruff==0.8.4",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["chronos_agent"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
