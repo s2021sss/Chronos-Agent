@@ -1,0 +1,36 @@
+# LiteLLM Proxy — конфигурация для Chronos-Agent
+
+model_list:
+  # Mistral AI
+  - model_name: "mistral-large-latest"
+    litellm_params:
+      model: "mistral/mistral-large-latest"
+      api_key: "os.environ/MISTRAL_API_KEY"
+    model_info:
+      id: "mistral"
+      input_cost_per_token: 0.000002
+      output_cost_per_token: 0.000006
+
+# Роутер
+router_settings:
+  routing_strategy: "latency-based-routing"
+  num_retries: 3
+  timeout: 60
+  retry_after: 5
+  allowed_fails: 5
+  cooldown_time: 30
+
+# LiteLLM SDK настройки
+litellm_settings:
+  success_callback: ["prometheus"]
+  custom_callbacks:
+    - "guardrails_hook.GuardrailsHook"
+  drop_params: true
+  suppress_debug_info: false
+
+# Общие настройки прокси
+general_settings:
+  master_key: "os.environ/LLM_PROXY_API_KEY"
+  database_url: "os.environ/DATABASE_URL"
+  store_model_in_db: true
+  detailed_debug: false
