@@ -27,9 +27,9 @@
 - Tool Layer → Google Tasks API (запись: create_task, complete_task)
 - Tool Layer ⇢ Google Calendar Events API (fallback-чтение: только при пустом результате из БД)
 - Tool Layer ⇢ Google Tasks API (fallback-чтение: только при пустом результате из БД)
-- Google Calendar / Tasks API → Webhook Handler (push notification)
+- Google Calendar Events API → Webhook Handler (push notification; Google Tasks API push-уведомления не поддерживает)
 - Webhook Handler → PostgreSQL (обновление calendar_events / calendar_tasks)
-- Agent Core ↔ OpenRouter / Mistral (запрос / structured output)
+- Agent Core ↔ Mistral API (запрос с tool definitions / tool_call ответ)
 - Agent Core ↔ PostgreSQL (чтение / запись стейта через checkpointer)
 - Agent Core → Langfuse (трейсы)
 - Scheduler → Agent Core (cron-триггер)
@@ -64,7 +64,7 @@ flowchart LR
         direction TB
         GCalEv["Google Calendar<br/>Events API"]
         GTask["Google Tasks API"]
-        LLM["OpenRouter / Mistral"]
+        LLM["Mistral API"]
         LF["Langfuse"]
     end
 
@@ -91,7 +91,6 @@ flowchart LR
     Tools -. "fallback-чтение" .-> GTask
 
     GCalEv -- "webhook" --> WHook
-    GTask -- "webhook" --> WHook
     WHook -- "синхронизация" --> DB
 
     Tools -- "уведомление" --> Bot

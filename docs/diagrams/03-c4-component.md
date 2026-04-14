@@ -2,99 +2,68 @@
 
 ## Цель
 
-Раскрывает внутреннее устройство **Agent Core** (LangGraph-граф).
+Раскрывает внутреннее устройство **Agent Core** (LangGraph ReAct-граф).
 Показывает узлы графа, переходы между ними и точки ветвления.
 
-## Обязательные элементы
+## Узлы графа
 
-| Компонент | Описание |
+| Узел | Описание |
 |---|---|
-| Entry Router | Определяет тип триггера: user message / cron |
-| Intent Extractor | LLM-вызов: текст → TaskIntent (JSON + confidence) |
-| Confidence Gate | Ветвление: confidence >= 0.6 → continue, иначе → ask_user |
-| Resource Type Gate | Ветвление: пользователь имеет в виду событие (Event) или задачу (Task)? |
-| Slot Analyzer | Читает calendar_events из локальной БД; ищет свободные окна |
-| Conflict Resolver | При конфликте — генерирует Top-3 альтернативных слота |
-| Action Decider | Выбирает action: create_event / create_task / move_event / complete_task / suggest / ask_user |
-| Action Executor | Вызывает Tool Layer; применяет Pydantic-валидацию |
-| HITL Gate | Ветвление: нужно ли подтверждение пользователя |
-| Confirmation Waiter | Ждёт ответа (≤ 5 мин); при timeout → stale |
-| State Writer | Обновляет локальную БД; пишет checkpoint в PostgreSQL |
-| Proactive Checker | Cron-путь: читает overdue tasks из локальной calendar_tasks |
+| `reasoner` | LLM-вызов: system prompt + messages + REACT_TOOL_DEFINITIONS → tool_call или final_answer |
+| `tool_router` | Маршрутизирует tool_call: READ_ONLY → executor, SIDE_EFFECT → HITL, TERMINAL → respond |
+| `read_tool_executor` | Выполняет read-only tool (get_events, find_free_slots и др.) → добавляет tool result → reasoner |
+| `hitl_wait` | Graph pauses (interrupt_before); ждёт callback кнопок ✅/❌; resume через AgentCore.resume() |
+| `write_tool_executor` | После confirmed=True: выполняет side-effect tool (Google API); устанавливает fixed final_answer |
+| `respond` | Конвертирует final_answer → Telegram HTML → notify_user → END |
 
 ## Ключевые связи
 
-- Entry Router → Intent Extractor (user path) или Proactive Checker (cron path)
-- Intent Extractor → Confidence Gate → Resource Type Gate
-- Resource Type Gate → Slot Analyzer (для Event) или Action Decider напрямую (для Task)
-- Slot Analyzer → Conflict Resolver (конфликт) или Action Decider (слот свободен)
-- Conflict Resolver → Action Decider
-- Action Decider → HITL Gate
-- HITL Gate → Confirmation Waiter (деструктивное / move) или Action Executor (безопасное)
-- Confirmation Waiter → Action Executor (OK) или END (отказ / timeout)
-- Action Executor → State Writer → END
+- `reasoner` → (tool_call) → `tool_router`
+- `reasoner` → (final_answer) → `respond`
+- `tool_router` → READ_ONLY tool → `read_tool_executor` → `reasoner` (loop)
+- `tool_router` → SIDE_EFFECT tool → `hitl_wait` (interrupt)
+- `tool_router` → `ask_user` → `respond`
+- `hitl_wait` → confirmed=True → `write_tool_executor` → `respond`
+- `hitl_wait` → confirmed=False → `respond`
 
 ## Диаграмма
 
 ```mermaid
 flowchart TD
     subgraph ENTRY ["Точка входа"]
-        ER["Entry Router<br/>Определяет тип триггера"]
+        ST(["START<br/>user_id, raw_input<br/>trigger, user_timezone"])
     end
 
-    subgraph USER_PATH ["User-triggered путь"]
-        IE["Intent Extractor<br/>LLM → TaskIntent JSON"]
-        CG{"Confidence Gate<br/>confidence >= 0.6?"}
-        AU["ask_user<br/>Запросить уточнение"]
-        RT{"Resource Type Gate<br/>Event или Task?"}
-    end
+    subgraph REACT ["LangGraph ReAct StateGraph"]
+        RN["🧠 reasoner<br/>─────────────────<br/>System prompt + prior_messages + messages<br/>Mistral: reasoning → tool_call или final_answer<br/><br/>итерации ≤ max_tool_calls_per_iteration"]
 
-    subgraph CALENDAR_PATH ["Анализ событий (Event)"]
-        SA["Slot Analyzer<br/>Читает calendar_events из БД"]
-        CR["Conflict Resolver<br/>Генерация Top-3 альтернатив"]
-    end
+        TR["🔀 tool_router<br/>─────────────────<br/>READ_ONLY → read_tool_executor<br/>SIDE_EFFECT → [interrupt] hitl_wait<br/>ask_user → respond"]
 
-    subgraph DECISION ["Принятие решения"]
-        AD["Action Decider<br/>create_event / create_task<br/>move_event / complete_task / suggest"]
-    end
+        RTE["📖 read_tool_executor<br/>─────────────────<br/>get_calendar_events<br/>find_free_slots<br/>get_pending_tasks<br/>get_conversation_history<br/><br/>result → messages → reasoner"]
 
-    subgraph EXECUTION ["Исполнение"]
-        HG{"HITL Gate<br/>Нужно подтверждение?"}
-        CW["Confirmation Waiter<br/>Ожидание ≤ 5 мин"]
-        AE["Action Executor<br/>Tool Layer + Pydantic"]
-        SW["State Writer<br/>Обновить БД + checkpoint"]
-    end
+        HW["⏸ hitl_wait<br/>─────────────────<br/>GRAPH PAUSES<br/>Checkpoint → PostgreSQL<br/>Отправляет inline keyboard ✅ / ❌<br/>Ждёт AgentCore.resume()"]
 
-    subgraph CRON_PATH ["Cron-triggered путь"]
-        PC["Proactive Checker<br/>Читает overdue tasks<br/>из calendar_tasks (БД)"]
+        WTE["✏️ write_tool_executor<br/>─────────────────<br/>create_event / create_task<br/>move_event / complete_task<br/><br/>Google Calendar / Tasks API<br/>Fixed final_answer (LLM не вызывается)"]
+
+        RESP["💬 respond<br/>─────────────────<br/>md_to_html(final_answer)<br/>notify_user → Telegram<br/>add_conversation_message"]
     end
 
     END(["END"])
 
-    ER -- "user message" --> IE
-    ER -- "cron trigger" --> PC
-    PC -- "найдены overdue задачи" --> AD
-    PC -- "нет overdue задач" --> END
+    ST --> RN
 
-    IE --> CG
-    CG -- "нет (< 0.6)" --> AU
-    AU --> END
-    CG -- "да" --> RT
+    RN -->|"final_answer"| RESP
+    RN -->|"pending_tool_call"| TR
 
-    RT -- "Event (встреча, звонок)" --> SA
-    RT -- "Task (to-do)" --> AD
+    TR -->|"READ_ONLY"| RTE
+    TR -->|"SIDE_EFFECT"| HW
+    TR -->|"ask_user"| RESP
 
-    SA -- "слот свободен" --> AD
-    SA -- "конфликт" --> CR
-    CR --> AD
+    RTE -->|"tool result → messages"| RN
 
-    AD --> HG
-    HG -- "безопасное (create)" --> AE
-    HG -- "move или массово (>3)" --> CW
+    HW -->|"confirmed = True"| WTE
+    HW -->|"confirmed = False"| RESP
 
-    CW -- "пользователь подтвердил" --> AE
-    CW -- "отказ / timeout" --> END
-
-    AE --> SW
-    SW --> END
+    WTE --> RESP
+    RESP --> END
 ```

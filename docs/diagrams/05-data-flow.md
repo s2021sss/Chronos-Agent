@@ -5,25 +5,16 @@
 Показывает **как данные проходят через систему**: что является входом, как трансформируется,
 что сохраняется, что логируется и какие данные возвращаются пользователю.
 
-## Обязательные элементы
-
-- Входные данные: текст / аудио от пользователя
-- Трансформации: транскрипция, извлечение намерений, анализ слотов
-- Хранилища: PostgreSQL (стейт + calendar_events + calendar_tasks + токены), Google APIs
-- Webhook: входящий поток от Google для синхронизации локальной БД
-- Логирование: Langfuse (трейсы, reason_text, confidence)
-- Выходные данные: ответ / предложение пользователю
-
 ## Ключевые трансформации данных
 
 | Вход | Трансформация | Выход |
 |---|---|---|
 | Аудиофайл (.ogg) | Whisper ASR | Текстовый транскрипт |
-| Текст пользователя | LLM Intent Extraction | TaskIntent (JSON) |
-| TaskIntent (Event) + calendar_events (БД) | Slot Analysis | Список свободных слотов |
-| Свободные слоты | Conflict Resolution | Top-3 альтернативы с score |
-| AgentAction | Tool Execution | Запись в Events API или Tasks API |
-| Google push notification | Webhook Handler | Обновление calendar_events / calendar_tasks в БД |
+| Текст + prior_messages + REACT_TOOL_DEFINITIONS | Mistral (reasoner) | tool_call или final_answer |
+| tool_call (READ_ONLY) | read_tool_executor | tool result → messages |
+| tool_call (SIDE_EFFECT) | tool_router → HITL | inline keyboard ✅/❌ |
+| confirmed=True + pending_tool_call | write_tool_executor | Запись в Google Calendar / Tasks API |
+| Google push notification | Webhook Handler | Обновление calendar_events в БД |
 
 ## Диаграмма
 
@@ -33,17 +24,18 @@ flowchart LR
         direction TB
         TEXT["Текстовое<br/>сообщение"]
         AUDIO["Аудиофайл<br/>(.ogg)"]
-        WEBHOOK_IN["Google Webhook<br/>push notification"]
+        WEBHOOK_IN["Google Calendar<br/>Webhook"]
     end
 
-    subgraph PROC ["Обработка"]
+    subgraph PROC ["ReAct StateGraph (LangGraph)"]
         direction TB
         ASR["Whisper ASR<br/>Транскрипция"]
-        EXTRACT["LLM<br/>Intent Extraction<br/>→ TaskIntent JSON"]
-        SLOTS["Slot Analyzer<br/>→ свободные окна<br/>(читает calendar_events)"]
-        RESOLVE["Conflict Resolver<br/>→ Top-3 альтернативы"]
-        DECIDE["Action Decider<br/>→ AgentAction"]
-        EXEC["Tool Layer<br/>Pydantic-валидация"]
+        REASON["reasoner<br/>Mistral + REACT_TOOL_DEFINITIONS<br/>→ tool_call / final_answer"]
+        ROUTER["tool_router<br/>READ_ONLY / SIDE_EFFECT / ask_user"]
+        READ_EX["read_tool_executor<br/>get_calendar_events<br/>find_free_slots<br/>get_pending_tasks<br/>get_conversation_history"]
+        HITL["hitl_wait<br/>inline keyboard ✅/❌"]
+        WRITE_EX["write_tool_executor<br/>create_event / create_task<br/>move_event / complete_task"]
+        RESPOND["respond<br/>→ Telegram"]
         WHHANDLER["Webhook Handler<br/>→ обновление локальной БД"]
     end
 
@@ -61,48 +53,38 @@ flowchart LR
     end
 
     subgraph OBS ["Observability"]
-        LF["Langfuse<br/>трейсы<br/>reason_text<br/>confidence"]
+        LF["Langfuse<br/>generations / spans<br/>tool_calls, latency"]
     end
 
-    subgraph OUT ["Выходные данные"]
-        direction TB
-        NOTIF["Уведомление<br/>пользователю"]
-        SUGGEST["Предложение<br/>с кнопками OK / Cancel"]
-    end
-
-    TEXT --> EXTRACT
+    TEXT --> REASON
     AUDIO --> ASR
-    ASR -- "транскрипт" --> EXTRACT
+    ASR -- "транскрипт" --> REASON
 
     WEBHOOK_IN --> WHHANDLER
-    WHHANDLER -- "обновить событие" --> PG_EV
-    WHHANDLER -- "обновить задачу" --> PG_TASK
+    WHHANDLER -- "upsert события" --> PG_EV
 
-    EXTRACT -- "TaskIntent (Event)" --> SLOTS
-    EXTRACT -- "TaskIntent (Task)" --> DECIDE
-    PG_EV -- "занятые слоты" --> SLOTS
-    SLOTS -- "слоты + конфликты" --> RESOLVE
-    RESOLVE -- "альтернативы" --> DECIDE
+    REASON -- "tool_call" --> ROUTER
+    REASON -- "final_answer" --> RESPOND
+    ROUTER -- "READ_ONLY" --> READ_EX
+    READ_EX -- "tool result → messages" --> REASON
+    ROUTER -- "SIDE_EFFECT" --> HITL
+    HITL -- "✅ confirmed" --> WRITE_EX
+    HITL -- "❌ cancel" --> RESPOND
+    WRITE_EX --> RESPOND
 
-    PG_TASK -- "overdue задачи (cron)" --> DECIDE
-    PG_STATE -- "стейт итерации" --> EXTRACT
+    READ_EX -- "get_events / get_tasks" --> PG_EV
+    READ_EX -- "get_tasks" --> PG_TASK
+    PG_EV -. "fallback" .-> GCAL_EV
 
-    DECIDE -- "AgentAction" --> EXEC
+    WRITE_EX -- "create / move event" --> GCAL_EV
+    WRITE_EX -- "create / complete task" --> GCAL_TASK
+    WRITE_EX -- "write-through" --> PG_EV
+    WRITE_EX -- "write-through" --> PG_TASK
 
-    EXEC -- "create / move event" --> GCAL_EV
-    GCAL_EV -- "gcal_event_id" --> EXEC
-    EXEC -- "обновить запись" --> PG_EV
+    REASON -. "checkpoint" .-> PG_STATE
+    HITL -. "checkpoint" .-> PG_STATE
 
-    EXEC -- "create / complete task" --> GCAL_TASK
-    GCAL_TASK -- "gcal_task_id" --> EXEC
-    EXEC -- "обновить запись" --> PG_TASK
-
-    EXEC -- "сохранить checkpoint" --> PG_STATE
-
-    EXTRACT -. "трейс" .-> LF
-    DECIDE -. "reason_text<br/>confidence" .-> LF
-    EXEC -. "результат действия" .-> LF
-
-    EXEC -- "подтверждено автоматически" --> NOTIF
-    DECIDE -- "требует подтверждения" --> SUGGEST
+    REASON -. "generation" .-> LF
+    READ_EX -. "span" .-> LF
+    WRITE_EX -. "span" .-> LF
 ```

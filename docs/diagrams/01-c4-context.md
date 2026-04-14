@@ -14,7 +14,7 @@
 | Telegram | External | Канал ввода/вывода |
 | Google Calendar Events API | External | Хранение и управление временными блоками (встречи, звонки) |
 | Google Tasks API | External | Хранение задач с возможностью отметки выполнения |
-| OpenRouter / Mistral | External | LLM-инференс |
+| Mistral API | External | LLM-инференс |
 | Langfuse | External | Observability и трассировка |
 
 ## Ключевые связи
@@ -23,8 +23,8 @@
 - Chronos Agent ↔ Google Calendar Events API (создание / перенос / чтение событий)
 - Chronos Agent ↔ Google Tasks API (создание / выполнение / чтение задач)
 - Google Calendar Events API → Chronos Agent (webhook: уведомление об изменениях)
-- Google Tasks API → Chronos Agent (webhook: уведомление об изменениях)
-- Chronos Agent ↔ OpenRouter (запрос и structured output ответ)
+- Google Tasks API — push-уведомления не поддерживает; задачи синхронизируются через write-through и startup recovery
+- Chronos Agent ↔ Mistral API (запрос с tool definitions → tool_call / final_answer)
 - Chronos Agent → Langfuse (логи трейсов, reason_text)
 
 ## Диаграмма
@@ -46,7 +46,7 @@ flowchart TB
     subgraph EXT ["Прочие внешние системы"]
         direction TB
         TG["Telegram<br/>Канал ввода / вывода"]
-        LLM["OpenRouter / Mistral<br/>LLM-инференс"]
+        LLM["Mistral API<br/>LLM-инференс (function calling / ReAct)"]
         LF["Langfuse<br/>Observability"]
     end
 
@@ -61,10 +61,9 @@ flowchart TB
 
     Agent -- "get / create / complete task" --> GTask
     GTask -- "данные задач" --> Agent
-    GTask -- "webhook: изменение задачи" --> Agent
 
-    Agent -- "запрос с контекстом" --> LLM
-    LLM -- "structured output (JSON)" --> Agent
+    Agent -- "запрос с tool definitions" --> LLM
+    LLM -- "tool_call / final_answer" --> Agent
 
     Agent -- "трейсы / reason_text" --> LF
 ```

@@ -25,20 +25,19 @@
 
 **Проверяет:**
 1. Соединение с PostgreSQL (простой `SELECT 1`)
-2. Доступность OpenRouter API (HEAD-запрос или cached status, не вызывает LLM)
+2. Доступность Mistral API (cached status, не вызывает LLM)
 
 **Ответы:**
 
 ```json
 // 200 OK — всё в порядке
-{ "status": "ok", "postgres": "ok", "openrouter": "ok" }
+{ "status": "ok", "postgres": "ok", "mistral": "ok" }
 
 // 503 Service Unavailable — хотя бы один компонент недоступен
-{ "status": "degraded", "postgres": "ok", "openrouter": "unreachable" }
+{ "status": "degraded", "postgres": "ok", "mistral": "unreachable" }
 ```
 
 - Langfuse недоступность **не влияет** на статус (не критично для работы агента)
-- Используется в `docker-compose` как `healthcheck` для контейнера агента
 - Таймаут проверки каждого компонента: 3 секунды
 
 ---
@@ -72,7 +71,7 @@ docker-compose up -d agent
 - `users` — профили пользователей
 - `calendar_events` — локальная копия событий Google Calendar
 - `calendar_tasks` — локальная копия задач Google Tasks
-- `service_logs` — ERROR/CRITICAL события app-логов (для поиска без доступа к файлам хоста)
+- `service_logs` — ERROR/CRITICAL события app-логов
 
 LangGraph checkpointer создаёт свои таблицы самостоятельно через `create_all` при первом запуске — они не управляются Alembic.
 
@@ -85,21 +84,25 @@ LangGraph checkpointer создаёт свои таблицы самостоят
 ```dotenv
 # Telegram
 TELEGRAM_BOT_TOKEN=
+TELEGRAM_WEBHOOK_URL=        # https://<domain>/webhook/telegram
 
 # Google OAuth
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
-GOOGLE_REDIRECT_URI=
+GOOGLE_REDIRECT_URI=         # https://<domain>/auth/google/callback
+OAUTH_STATE_SECRET=          # HMAC-ключ для подписи state (защита CSRF)
 
 # Шифрование OAuth-токенов пользователей
-ENCRYPTION_KEY=                     # Fernet key, base64
+ENCRYPTION_KEY=              # Fernet key, base64
 
-# LLM
-OPENROUTER_API_KEY=
-OPENROUTER_MODEL=mistral/mistral-large-latest
+# LLM основной: Mistral
+MISTRAL_API_KEY=
+MISTRAL_MODEL=mistral-large-latest
+MISTRAL_BASE_URL=https://api.mistral.ai/v1
+LLM_MAX_TOKENS=512
 
 # PostgreSQL
-POSTGRES_URL=postgresql://user:pass@localhost:5432/chronos
+POSTGRES_URL=postgresql+asyncpg://user:pass@localhost:5432/chronos
 
 # Langfuse
 LANGFUSE_PUBLIC_KEY=
@@ -107,18 +110,18 @@ LANGFUSE_SECRET_KEY=
 LANGFUSE_HOST=http://localhost:3000
 
 # Whisper
-WHISPER_MODEL=base                  # base / small / medium
-WHISPER_DEVICE=cpu                  # cpu / cuda
+WHISPER_MODEL=base           # base / small / medium
+WHISPER_DEVICE=cpu           # cpu / cuda
+WHISPER_COMPUTE_TYPE=int8    # int8 (CPU) / float16 (GPU)
 
 # Агент
-CONFIDENCE_THRESHOLD=0.6
 CONFIRMATION_TIMEOUT_SECONDS=300    # 5 мин
-AGENT_ITERATION_TIMEOUT_SECONDS=30  # макс. время ReAct-цикла
-MAX_TOOL_CALLS_PER_ITERATION=3
+AGENT_ITERATION_TIMEOUT_SECONDS=60  # макс. время ReAct-цикла
+MAX_TOOL_CALLS_PER_ITERATION=5
 SEARCH_WINDOW_HOURS=24
 CRON_INTERVAL_MINUTES=60
 WEBHOOK_RENEWAL_INTERVAL_DAYS=6
-ORPHAN_SESSION_TIMEOUT_MINUTES=10   # сессии старше N мин при старте = orphaned
+ORPHAN_SESSION_TIMEOUT_MINUTES=10
 
 # Rate limiting
 RATE_LIMIT_MSG_PER_MINUTE=5         # макс. сообщений от одного пользователя в минуту
@@ -138,7 +141,7 @@ AUDIO_RETENTION_DAYS=14
 
 | Модель | Параметр | Текущее значение |
 |---|---|---|
-| LLM | `OPENROUTER_MODEL` | `mistral/mistral-large-latest` |
+| LLM основной | `MISTRAL_MODEL` | `mistral-large-latest` |
 | Whisper | `WHISPER_MODEL` | `base` (PoC); при необходимости — `small` |
 
 Смена модели — через переменную окружения, без пересборки образа.
@@ -177,23 +180,19 @@ POST https://api.telegram.org/bot{TOKEN}/setWebhook
 - `ENCRYPTION_KEY` ротируется вручную; при ротации — перешифровать все токены в `users.gcal_refresh_token`
 
 ### Аутентификация webhook-эндпоинтов
-- Telegram webhook проверяет `X-Telegram-Bot-Api-Secret-Token` (параметр `setWebhook`); запросы без токена → 403
+- Telegram webhook проверяет `X-Telegram-Bot-Api-Secret-Token`; запросы без токена → 403
 - Google Calendar Webhook проверяет `X-Goog-Channel-Token`; запросы без совпадающего токена → 403
-- Оба эндпоинта принимают запросы только от ожидаемых источников; IP-whitelist не применяется (Google и Telegram не имеют фиксированных диапазонов)
 
 ### Изоляция данных пользователей
-- Каждый инструментальный вызов получает `user_id` явно; перед чтением/записью в БД и перед Google API-вызовом проверяется, что ресурс принадлежит этому `user_id`
+- Каждый инструментальный вызов получает `user_id` явно; перед чтением/записью проверяется принадлежность ресурса пользователю
 - LangGraph `thread_id = user_id` — checkpoint изолирован по пользователю
-- Данные одного пользователя никогда не передаются в контекст LLM другого пользователя
 
 ### Обработка отозванных OAuth-токенов
 - `401 Unauthorized` от Google → попытка обновить через `refresh_token`
-- Если обновление даёт `invalid_grant` (токен отозван пользователем в Google Account) → флаг `gcal_refresh_token = NULL` в `users`, уведомить пользователя о необходимости повторной авторизации, инициировать onboarding OAuth flow
-- Отличие от истёкшего токена: `invalid_grant` — постоянный отзыв, не временная ошибка; retry не поможет
+- Если обновление даёт `invalid_grant` → флаг `gcal_refresh_token = NULL`, уведомить пользователя, инициировать re-auth
 
 ### Санация пользовательского ввода
 - Заголовки событий и задач санируются в Pydantic-валидаторах (удаление управляющих символов, обрезка длины) — подробно в [02-tools-apis.md](02-tools-apis.md)
-- Текст пользователя не передаётся в tool-вызовы напрямую — только через структурированный `TaskIntent` после LLM-парсинга
 
 ---
 
@@ -201,40 +200,30 @@ POST https://api.telegram.org/bot{TOKEN}/setWebhook
 
 ### Старт сервиса
 - Все контейнеры имеют `restart: unless-stopped` в docker-compose
-- PostgreSQL: `healthcheck` перед стартом агента (wait-for-it)
+- PostgreSQL: `healthcheck` перед стартом агента
 - При недоступности PostgreSQL при старте — агент не запускается, логирует `CRITICAL`
-- При недоступности OpenRouter при старте — агент запускается, но LLM-запросы падают с retry
+- При недоступности Mistral при старте — агент запускается, но LLM-запросы падают с retry
 - Langfuse недоступен — агент работает, трейсы теряются (не критично для PoC)
 
 ### Надёжность во время работы
 
 **Whisper (ASR):**
 - Запускается в том же процессе, что и агент (in-process)
-- Ограничен таймаутом `asyncio.wait_for` в 30 с (общий `AGENT_ITERATION_TIMEOUT_SECONDS`)
-- При зависании inference (редко, но возможно на CPU) — timeout прерывает итерацию; пользователю предлагается прислать текстом
-- Whisper занимает 1 CPU core во время inference; параллельные голосовые сообщения выстраиваются в очередь (FastAPI обрабатывает один голосовой запрос за раз в силу GIL)
+- Ограничен таймаутом `asyncio.wait_for` в рамках `AGENT_ITERATION_TIMEOUT_SECONDS`
+- При зависании inference — timeout прерывает итерацию; пользователю предлагается прислать текстом
 
 **Cron и APScheduler:**
-- `max_instances=1` на каждую задачу — если предыдущий прогон не завершился, новый пропускается (misfire)
-- Сбой cron-задачи (необработанное исключение) логируется как `ERROR`; APScheduler продолжает работу, следующий тик запускается по расписанию
-- Нет алертинга при систематических сбоях cron в PoC — мониторинг вручную через app-логи
+- `max_instances=1` на каждую задачу — если предыдущий прогон не завершился, новый пропускается
+- Сбой cron-задачи логируется как `ERROR`; APScheduler продолжает работу
 
-**PostgreSQL недоступен в runtime (не при старте):**
-- LangGraph checkpointer выбросит исключение при попытке сохранить checkpoint
-- Итерация графа падает; пользователь получает сообщение об ошибке (через Telegram, если Telegram доступен)
+**PostgreSQL недоступен в runtime:**
+- LangGraph checkpointer выбросит исключение
+- Пользователь получает сообщение об ошибке через Telegram (если Telegram доступен)
 - Агент не выходит из строя целиком — следующий запрос будет обработан при восстановлении БД
-- Логировать `ERROR` с трассировкой
-
-**Атомарность `execute_action` + `state_writer`:**
-- Эти два шага не атомарны: инструмент может успешно создать событие в Google Calendar, а запись в локальную БД — упасть
-- При сбое `state_writer`: событие существует в Google Calendar, но отсутствует в `calendar_events`; при следующем webhook-уведомлении от Google — запись будет создана через `ON CONFLICT DO UPDATE`
-- Дублирование не возникнет: идемпотентность `create_event` проверяет `calendar_events` перед API-вызовом
 
 ---
 
 ## Минимальные требования к хосту (PoC)
-
-Ориентировочные требования для запуска всего стека на одной машине:
 
 | Компонент | RAM | Примечание |
 |---|---|---|

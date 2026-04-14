@@ -30,7 +30,7 @@ class CreateEventInput(BaseModel):
 **Ограничения:**
 - `end > start` — обязательно
 - `start` не может быть в прошлом более чем на 1 час (sanity check)
-- Без подтверждения пользователя (автоматическое создание при `confidence >= 0.6` и свободном слоте)
+- Требует HITL-подтверждения (`✅/❌` в Telegram) через `hitl_wait`-узел графа
 
 **Идемпотентность:**
 - Перед вызовом Google Calendar API проверить `calendar_events` на наличие записи с тем же `user_id`, `title`, `start` (±1 мин)
@@ -118,7 +118,7 @@ class NotifyInput(BaseModel):
 
 **Цель:** Отправить предложение с кнопками и дождаться ответа пользователя.
 
-**Вход:** `user_id`, `text`, `action_payload` (сериализованный `AgentAction`)
+**Вход:** `user_id`, `text`, `thread_id`
 
 **Выход:** `confirmed: bool`
 
